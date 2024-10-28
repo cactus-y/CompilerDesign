@@ -117,26 +117,26 @@ TreeNode * newExpNode(ExpKind kind)
   return t;
 }
 
-/* Function newParamNode creates a new parameter node
- * node for syntax tree construction
- */
-TreeNode * newParamNode(ParamKind kind) {
-  TreeNode *t = (TreeNode *) malloc(sizeof(TreeNode));
-  int i;
-  if(t == NULL)
-    fprintf(listing, "Out of memory error at line %d\n", lineno);
-  else {
-    for(i = 0; i < MAXCHILDREN; i++) t -> child[i] = NULL;
-    t -> sibling = NULL;
-    t -> nodekind = ParamK;
-    t -> kind.param = kind;
-    t -> lineno = lineno;
-    t -> type = Void;
-    t -> attr.name = NULL;
-    t -> isArray = FALSE;
-  }
-  return t;
-}
+// /* Function newParamNode creates a new parameter node
+//  * node for syntax tree construction
+//  */
+// TreeNode * newParamNode(ParamKind kind) {
+//   TreeNode *t = (TreeNode *) malloc(sizeof(TreeNode));
+//   int i;
+//   if(t == NULL)
+//     fprintf(listing, "Out of memory error at line %d\n", lineno);
+//   else {
+//     for(i = 0; i < MAXCHILDREN; i++) t -> child[i] = NULL;
+//     t -> sibling = NULL;
+//     t -> nodekind = ParamK;
+//     t -> kind.param = kind;
+//     t -> lineno = lineno;
+//     t -> type = Void;
+//     t -> attr.name = NULL;
+//     t -> isArray = FALSE;
+//   }
+//   return t;
+// }
 
 /* Function copyString allocates and makes a new
  * copy of an existing string
@@ -194,6 +194,18 @@ void printTree( TreeNode * tree )
           if(tree -> isArray) fprintf(listing, "[]\n");
           else fprintf(listing, "\n");
           break;
+        case ParamK:
+          /* void parameter */
+          if(tree -> attr.name == NULL) {
+            fprintf(listing, "Void Parameter\n");
+          } else {
+            fprintf(listing, "Parameter: name = %s, type = ", tree -> attr.name);
+            if(tree -> type == Integer) fprintf(listing, "int");
+            else if(tree -> type == Void) fprintf(listing, "void");
+            if(tree -> isArray) fprintf(listing, "[]\n");
+            else fprintf(listing, "\n");
+          }
+          break;
         default: 
           fprintf(listing, "Unknown Declaration Node\n");
           break;
@@ -220,7 +232,7 @@ void printTree( TreeNode * tree )
     } else if(tree -> nodekind == ExpK) {
       switch(tree -> kind.exp) {
         case OpK:
-          fprintf(listing, "Op: %s\n", tree->attr.op);
+          fprintf(listing, "Op: %c\n", tree->attr.op);
           break;
         case ConstK:
           fprintf(listing, "Const: %d\n", tree -> attr.val);
@@ -238,18 +250,20 @@ void printTree( TreeNode * tree )
           fprintf(listing, "Unknown Expression Kind\n");
           break;
       }
-    } else if(tree -> nodekind == ParamK) {
-      /* void parameter */
-      if(tree -> attr.name == NULL) {
-        fprintf(listing, "Void Parameter\n");
-      } else {
-        fprintf(listing, "Parameter: name = %s, type = ", tree -> attr.name);
-        if(tree -> type == Integer) fprintf(listing, "int");
-        else if(tree -> type == Void) fprintf(listing, "void");
-        if(tree -> isArray) fprintf(listing, "[]\n");
-        else fprintf(listing, "\n");
-      }
-    } else fprintf(listing, "Unknown Node Kind\n");
+    } 
+    // else if(tree -> nodekind == ParamK) {
+    //   /* void parameter */
+    //   if(tree -> attr.name == NULL) {
+    //     fprintf(listing, "Void Parameter\n");
+    //   } else {
+    //     fprintf(listing, "Parameter: name = %s, type = ", tree -> attr.name);
+    //     if(tree -> type == Integer) fprintf(listing, "int");
+    //     else if(tree -> type == Void) fprintf(listing, "void");
+    //     if(tree -> isArray) fprintf(listing, "[]\n");
+    //     else fprintf(listing, "\n");
+    //   }
+    // } 
+    else fprintf(listing, "Unknown Node Kind\n");
     for(i = 0; i < MAXCHILDREN; i++)
       printTree(tree -> child[i]);
     tree = tree -> sibling;

@@ -28,7 +28,7 @@ static int yylex(void); // added 11/2/11 to ensure no conflict with lex
 
 %token IF THEN ELSE WHILE RETURN INT VOID
 %token ID NUM 
-%token ASSIGN EQ LT LE GT GE PLUS MINUS TIMES OVER LPAREN RPAREN LBRACE RBRACE LCURLY RCURLY SEMI COMMA
+%token ASSIGN EQ NE LT LE GT GE PLUS MINUS TIMES OVER LPAREN RPAREN LBRACE RBRACE LCURLY RCURLY SEMI COMMA
 %token ERROR 
 
 %% /* Grammar for C-Minus */
@@ -57,28 +57,28 @@ var_declaration
                 { $$ = newDeclNode(VarK);
                   $$ -> attr.name = copyString(tokenString);
                   $$ -> lineno = savedLineNo;
-                  $$ -> type = $1;
+                  $$ -> type = $1 -> type;
                 }
             | type_specifier ID LBRACE NUM RBRACE SEMI
-                { $$ newDeclNode(VarK);
+                { $$ = newDeclNode(VarK);
                   $$ -> attr.name = copyString(tokenString);
                   $$ -> lineno = savedLineNo;
-                  $$ -> type = $1;
+                  $$ -> type = $1 -> type;
                   $$ -> isArray = TRUE;
                   $$ -> child[0] = newExpNode(ConstK);
                   $$ -> child[0] -> attr.val = atoi(tokenString);
                 }
             ;
 type_specifier
-            : INT { $$ = INT; }
-            | VOID { $$ = VOID; }
+            : INT { $$ = Integer; }
+            | VOID { $$ = Void; }
             ;
 fun_declaration
             : type_specifier ID LPAREN params RPAREN compound_stmt
                 { $$ = newDeclNode(FuncK);
                   $$ -> attr.name = copyString(tokenString);
                   $$ -> lineno = savedLineNo;
-                  $$ -> type = $1;
+                  $$ -> type = $1 -> type;
                   $$ -> child[0] = $4;
                   $$ -> child[1] = $6;
                 }
@@ -100,16 +100,16 @@ param_list
             ;
 param
             : type_specifier ID 
-                { $$ = newParamNode(ParamK);
+                { $$ = newDeclNode(ParamK);
                   $$ -> attr.name = copyString(tokenString);
                   $$ -> lineno = savedLineNo;
-                  $$ -> type = $1;
+                  $$ -> type = $1 -> type;
                 }
             | type_specifier ID LBRACE RBRACE
-                { $$ = newParamNode(ParamK);
+                { $$ = newDeclNode(ParamK);
                   $$ -> attr.name = copyString(tokenString);
                   $$ -> lineno = savedLineNo;
-                  $$ -> type = $1;
+                  $$ -> type = $1 -> type;
                   $$ -> isArray = TRUE;
                 }
             ;

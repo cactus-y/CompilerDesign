@@ -28,10 +28,10 @@ TreeNode * newStmtNode(StmtKind);
  */
 TreeNode * newExpNode(ExpKind);
 
-/* Function newParamNode creates a new parameter node
- * node for syntax tree construction
- */
-TreeNode * newParamNode(ParamKind);
+// /* Function newParamNode creates a new parameter node
+//  * node for syntax tree construction
+//  */
+// TreeNode * newParamNode(ParamKind);
 
 /* Function copyString allocates and makes a new
  * copy of an existing string
