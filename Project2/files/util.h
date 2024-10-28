@@ -13,6 +13,11 @@
  */
 void printToken( TokenType, const char* );
 
+/* Function newDeclNode creates a new declaration node
+ * node for syntax tree construction
+ */
+TreeNode * newDeclNode(DeclKind);
+
 /* Function newStmtNode creates a new statement
  * node for syntax tree construction
  */
@@ -22,6 +27,11 @@ TreeNode * newStmtNode(StmtKind);
  * node for syntax tree construction
  */
 TreeNode * newExpNode(ExpKind);
+
+/* Function newParamNode creates a new parameter node
+ * node for syntax tree construction
+ */
+TreeNode * newParamNode(ParamKind);
 
 /* Function copyString allocates and makes a new
  * copy of an existing string
