@@ -13,7 +13,6 @@
 #include "parse.h"
 
 #define YYSTYPE TreeNode *
-static char * savedName; /* for use in assignments */
 static int savedLineNo;  /* ditto */
 static TreeNode * savedTree; /* stores syntax tree for later return */
 static int yylex(void); // added 11/2/11 to ensure no conflict with lex
@@ -21,21 +20,21 @@ static int yylex(void); // added 11/2/11 to ensure no conflict with lex
 %}
 
 /* precedence & associativity */
+%nonassoc RPAREN
 %nonassoc ELSE
 %left PLUS MINUS
 %left TIMES OVER
 %right ASSIGN
 
-%token IF THEN ELSE WHILE RETURN INT VOID
+%token IF WHILE RETURN INT VOID
 %token ID NUM 
-%token ASSIGN EQ NE LT LE GT GE PLUS MINUS TIMES OVER LPAREN RPAREN LBRACE RBRACE LCURLY RCURLY SEMI COMMA
+%token EQ NE LT LE GT GE LPAREN LBRACE RBRACE LCURLY RCURLY SEMI COMMA
 %token ERROR 
 
 %% /* Grammar for C-Minus */
 
 program
-            : declaration_list
-                  { savedTree = $1;} 
+            : declaration_list { savedTree = $1;} 
             ;
 declaration_list
             : declaration_list declaration
@@ -53,39 +52,52 @@ declaration
             | fun_declaration { $$ = $1; }
             ;
 var_declaration
-            : type_specifier ID SEMI
+            : type_specifier identifier SEMI
                 { $$ = newDeclNode(VarK);
-                  $$ -> attr.name = copyString(tokenString);
-                  $$ -> lineno = savedLineNo;
+                  $$ -> attr.name = $2 -> name;
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
                 }
-            | type_specifier ID LBRACE NUM RBRACE SEMI
+            | type_specifier identifier LBRACE number RBRACE SEMI
                 { $$ = newDeclNode(VarK);
-                  $$ -> attr.name = copyString(tokenString);
-                  $$ -> lineno = savedLineNo;
-                  $$ -> type = $1 -> type;
-                  $$ -> isArray = TRUE;
-                  $$ -> child[0] = newExpNode(ConstK);
-                  $$ -> child[0] -> attr.val = atoi(tokenString);
+                  $$ -> attr.name = $2 -> name;
+                  $$ -> lineno = $2 -> lineno;
+                  if ($1 -> type == Integer) $$ -> type = IntegerArray;
+                  else if ($1 -> type == Void) $$ -> type = VoidArray;
+                  else $$ -> type = None;
+                  $$ -> child[0] = $4;
                 }
             ;
 type_specifier
-            : INT { $$ = Integer; }
-            | VOID { $$ = Void; }
+            : INT 
+                { $$ = newParserNode(TypeK);
+                  $$ -> lineno = lineno;
+                  $$ -> type = Integer;
+                }
+            | VOID 
+                { $$ = newParserNode(TypeK);
+                  $$ -> lineno = lineno;
+                  $$ -> type = Void;
+                }
             ;
 fun_declaration
-            : type_specifier ID LPAREN params RPAREN compound_stmt
+            : type_specifier identifier LPAREN params RPAREN compound_stmt
                 { $$ = newDeclNode(FuncK);
-                  $$ -> attr.name = copyString(tokenString);
-                  $$ -> lineno = savedLineNo;
-                  $$ -> type = $1 -> type;
+                  $$ -> attr.name = $2 -> name;
+                  $$ -> lineno = $2 -> lineno;
+                  if ($1 -> type == Integer) $$ -> type = Integer;
+                  else if ($1 -> type == Void) $$ -> type = Void;
+                  else $$ -> type = None;
                   $$ -> child[0] = $4;
                   $$ -> child[1] = $6;
                 }
             ;
 params
             : param_list { $$ = $1; }
-            | VOID { $$ = NULL; }
+            | VOID 
+                { $$ = newDeclNode(ParamK);
+                  $$ -> attr.flag = TRUE;
+                }
             ;
 param_list
             : param_list COMMA param
@@ -99,18 +111,17 @@ param_list
             | param { $$ = $1; }
             ;
 param
-            : type_specifier ID 
+            : type_specifier identifier 
                 { $$ = newDeclNode(ParamK);
-                  $$ -> attr.name = copyString(tokenString);
-                  $$ -> lineno = savedLineNo;
+                  $$ -> attr.name = $2 -> name;
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
                 }
-            | type_specifier ID LBRACE RBRACE
+            | type_specifier identifier LBRACE RBRACE
                 { $$ = newDeclNode(ParamK);
-                  $$ -> attr.name = copyString(tokenString);
-                  $$ -> lineno = savedLineNo;
+                  $$ -> attr.name = $2 -> name;
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
-                  $$ -> isArray = TRUE;
                 }
             ;
 compound_stmt
@@ -129,7 +140,7 @@ local_declrations
                     $$ = $1;
                   } else $$ = $2;
                 }
-            | { $$ = NULL; }
+            | empty { $$ = $1; }
             ;
 statement_list
             : statement_list statement
@@ -140,42 +151,48 @@ statement_list
                     $$ = $1;
                   } else $$ = $2;
                 }
-            | { $$ = NULL; }
+            | empty { $$ = $1; }
             ;
 statement
-            : expression_stmt
-            | compound_stmt
-            | selection_stmt
-            | iteration_stmt
-            | return_stmt
+            : expression_stmt { $$ = $1; }
+            | compound_stmt { $$ = $1; }
+            | selection_stmt { $$ = $1; }
+            | iteration_stmt { $$ = $1; }
+            | return_stmt { $$ = $1; }
             ;
 expression_stmt
             : expression SEMI { $$ = $1; }
-            | SEMI { $$ = NULL; }
+            | SEMI { }
             ;
 selection_stmt
-            : IF LPAREN expression RPAREN statement %prec ELSE
+            : IF LPAREN expression RPAREN statement ELSE statement
                 { $$ = newStmtNode(IfK); 
-                  $$ -> child[0] = $3;
-                  $$ -> child[1] = $5;
-                }
-            | IF LPAREN expression RPAREN statement ELSE statement
-                { $$ = newStmtNode(IfK);
+                  $$ -> lineno = $3 -> lineno;
+                  $$ -> attr.flag = TRUE;
                   $$ -> child[0] = $3;
                   $$ -> child[1] = $5;
                   $$ -> child[2] = $7;
+                }
+            | IF LPAREN expression RPAREN statement
+                { $$ = newStmtNode(IfK);
+                  $$ -> lineno = $3 -> lineno;
+                  $$ -> child[0] = $3;
+                  $$ -> child[1] = $5;
                 }
             ;
 iteration_stmt
             : WHILE LPAREN expression RPAREN statement
                 { $$ = newStmtNode(WhileK);
+                  $$ -> lineno = $3 -> lineno;
                   $$ -> child[0] = $3;
                   $$ -> child[1] = $5;
                 }
             ;
 return_stmt
             : RETURN SEMI
-                { $$ = newStmtNode(ReturnK); }
+                { $$ = newStmtNode(ReturnK); 
+                  $$ -> attr.flag = TRUE;
+                }
             | RETURN expression SEMI
                 { $$ = newStmtNode(ReturnK); 
                   $$ -> child[0] = $2;
@@ -190,19 +207,20 @@ expression
             | simple_expression { $$ = $1; }
             ;
 var
-            : ID
-                { $$ = newExpNode(IdK);
-                  $$ -> attr.name = copyString(tokenString);
+            : identifier
+                { $$ = newExpNode(VarAccessK);
+                  $$ -> attr.name = $1 -> name;
                 }
-            | ID LBRACE expression RBRACE
-                { $$ = newExpNode(IdK);
-                  $$ -> attr.name = copyString(tokenString);
+            | identifier LBRACE expression RBRACE
+                { $$ = newExpNode(VarAccessK);
+                  $$ -> attr.name = $1 -> name;
                   $$ -> child[0] = $3;
                 }
             ;
 simple_expression
             : additive_expression relop additive_expression
                 { $$ = newExpNode(OpK);
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> child[0] = $1;
                   $$ -> child[1] = $3;
                   $$ -> attr.op = $2;
@@ -210,57 +228,101 @@ simple_expression
             | additive_expression { $$ = $1; }
             ;
 relop
-            : LE { $$ = LE; }
-            | LT { $$ = LT; }
-            | GT { $$ = GT; }
-            | GE { $$ = GE; }
-            | EQ { $$ = EQ; }
-            | NE { $$ = NE; }
+            : LE 
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = LE;
+                }
+            | LT
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = LT;
+                }
+            | GT
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = GT;
+                }
+            | GE
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = GE;
+                }
+            | EQ
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = EQ;
+                }
+            | NE
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = NE;
+                }
             ;
 additive_expression
             : additive_expression addop term
-                { $$ = newExpNode(OpK);
-                  $$ -> child[0] = $1;
-                  $$ -> child[1] = $3;
+                { YYSTYPE t = newExpNode(OpK);
                   $$ -> attr.op = $2;
+                  if (t != NULL) {
+                    $$ -> child[0] = $1;
+                    $$ -> child[1] = $3;
+                    $$ = t;
+                  } else { $$ = $2; }
                 }
             | term { $$ = $1; }
             ;
 addop
-            : PLUS { $$ = PLUS; }
-            | MINUS { $$ = MINUS; }
+            : PLUS 
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = PLUS;
+                }
+            | MINUS
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = MINUS;
+                }
             ;
 term
             : term mulop factor
-                { $$ = newExpNode(OpK);
-                  $$ -> child[0] = $1;
-                  $$ -> child[1] = $3;
+                { YYSTYPE t = newExpNode(OpK);
                   $$ -> attr.op = $2;
+                  if (t != NULL) {
+                    $$ -> child[0] = $1;
+                    $$ -> child[1] = $3;
+                    $$ = t;
+                  } else { $$ = $2; }
                 }
             | factor { $$ = $1; }
             ;
 mulop
-            : TIMES { $$ = TIMES; }
-            | OVER { $$ = OVER; }
-            ;
-factor
-            : LPAREN expression RPAREN { $$ = $2; }
-            | var { $$ = $1; }
-            | NUM
-                { $$ = newExpNode(ConstK);
-                  $$ -> attr.val = atoi(tokenString);
+            : TIMES
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = TIMES;
+                }
+            | OVER
+                { $$ = newParserNode(OpcodeK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.op = OVER;
                 }
             ;
+factor
+            : LPAREN expression RPAREN { $$ -> name = $2 -> name; }
+            | var { $$ = $1; }
+            | call { $$ = $1; }
+            | number { $$ = $1; }
+            ;
 call
-            : ID LPAREN args RPAREN
+            : identifier LPAREN args RPAREN
                 { $$ = newExpNode(CallK);
-                  $$ -> attr.name = copyString(tokenString);
+                  $$ -> attr.name = $1 -> name;
                   $$ -> child[0] = $3;
                 }
             ;
 args
             : arg_list { $$ = $1; }
-            | { $$ = NULL; }
+            | empty { $$ = $1; }
             ;
 arg_list
             : arg_list COMMA expression
@@ -272,6 +334,23 @@ arg_list
                   } else $$ = $3;
                 }
             | expression { $$ = $1; }
+            ;
+identifier
+            : ID
+                { $$ = newParserNode(IdK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.name = copyString(tokenString);
+                }
+            ;
+number
+            : NUM
+                { $$ = newExpNode(ConstK);
+                  $$ -> lineno = lineno;
+                  $$ -> attr.val = atoi(tokenString);
+                }
+            ;
+empty
+            : { $$ = NULL; }
             ;
 
 %%
