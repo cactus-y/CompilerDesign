@@ -54,13 +54,13 @@ declaration
 var_declaration
             : type_specifier identifier SEMI
                 { $$ = newDeclNode(VarK);
-                  $$ -> attr.name = $2 -> name;
+                  $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
                 }
             | type_specifier identifier LBRACE number RBRACE SEMI
                 { $$ = newDeclNode(VarK);
-                  $$ -> attr.name = $2 -> name;
+                  $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   if ($1 -> type == Integer) $$ -> type = IntegerArray;
                   else if ($1 -> type == Void) $$ -> type = VoidArray;
@@ -83,7 +83,7 @@ type_specifier
 fun_declaration
             : type_specifier identifier LPAREN params RPAREN compound_stmt
                 { $$ = newDeclNode(FuncK);
-                  $$ -> attr.name = $2 -> name;
+                  $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   if ($1 -> type == Integer) $$ -> type = Integer;
                   else if ($1 -> type == Void) $$ -> type = Void;
@@ -113,13 +113,13 @@ param_list
 param
             : type_specifier identifier 
                 { $$ = newDeclNode(ParamK);
-                  $$ -> attr.name = $2 -> name;
+                  $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
                 }
             | type_specifier identifier LBRACE RBRACE
                 { $$ = newDeclNode(ParamK);
-                  $$ -> attr.name = $2 -> name;
+                  $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
                 }
@@ -209,11 +209,11 @@ expression
 var
             : identifier
                 { $$ = newExpNode(VarAccessK);
-                  $$ -> attr.name = $1 -> name;
+                  $$ -> attr.name = $1 -> attr.name;
                 }
             | identifier LBRACE expression RBRACE
                 { $$ = newExpNode(VarAccessK);
-                  $$ -> attr.name = $1 -> name;
+                  $$ -> attr.name = $1 -> attr.name;
                   $$ -> child[0] = $3;
                 }
             ;
@@ -223,7 +223,7 @@ simple_expression
                   $$ -> lineno = $2 -> lineno;
                   $$ -> child[0] = $1;
                   $$ -> child[1] = $3;
-                  $$ -> attr.op = $2;
+                  $$ -> attr.op = $2 -> attr.op;
                 }
             | additive_expression { $$ = $1; }
             ;
@@ -262,7 +262,7 @@ relop
 additive_expression
             : additive_expression addop term
                 { YYSTYPE t = newExpNode(OpK);
-                  $$ -> attr.op = $2;
+                  $$ -> attr.op = $2 -> attr.op;
                   if (t != NULL) {
                     $$ -> child[0] = $1;
                     $$ -> child[1] = $3;
@@ -286,7 +286,7 @@ addop
 term
             : term mulop factor
                 { YYSTYPE t = newExpNode(OpK);
-                  $$ -> attr.op = $2;
+                  $$ -> attr.op = $2 -> attr.op;
                   if (t != NULL) {
                     $$ -> child[0] = $1;
                     $$ -> child[1] = $3;
@@ -308,7 +308,7 @@ mulop
                 }
             ;
 factor
-            : LPAREN expression RPAREN { $$ -> name = $2 -> name; }
+            : LPAREN expression RPAREN { $$ -> attr.name = $2 -> attr.name; }
             | var { $$ = $1; }
             | call { $$ = $1; }
             | number { $$ = $1; }
@@ -316,7 +316,7 @@ factor
 call
             : identifier LPAREN args RPAREN
                 { $$ = newExpNode(CallK);
-                  $$ -> attr.name = $1 -> name;
+                  $$ -> attr.name = $1 -> attr.name;
                   $$ -> child[0] = $3;
                 }
             ;
