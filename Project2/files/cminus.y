@@ -158,7 +158,7 @@ statement_list
                     while(t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $2;
                     $$ = $1;
-                  } { else $$ = $2; }
+                  } else { $$ = $2; }
                 }
             | empty { $$ = $1; }
             ;

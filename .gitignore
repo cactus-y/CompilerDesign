@@ -2,3 +2,7 @@
 *.zip
 *.o
 cminus_parser
+lex.yy.c
+y.output
+y.tab.c
+y.tab.h
