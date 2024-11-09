@@ -20,16 +20,15 @@ static int yylex(void); // added 11/2/11 to ensure no conflict with lex
 %}
 
 /* precedence & associativity */
+%token IF WHILE RETURN INT VOID
 %nonassoc RPAREN
 %nonassoc ELSE
-%left PLUS MINUS
-%left TIMES OVER
-%right ASSIGN
-
-%token IF WHILE RETURN INT VOID
 %token ID NUM 
 %token EQ NE LT LE GT GE LPAREN LBRACE RBRACE LCURLY RCURLY SEMI COMMA
 %token ERROR 
+%left PLUS MINUS
+%left TIMES OVER
+%right ASSIGN
 
 %% /* Grammar for C-Minus */
 
@@ -43,7 +42,7 @@ declaration_list
                     while (t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $2;
                     $$ = $1;
-                  } else $$ = $2;
+                  } else { $$ = $2; } 
                 }
             | declaration { $$ = $1 ;}
             ;
@@ -57,15 +56,19 @@ var_declaration
                   $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
+                  free($1);
+                  free($2);
                 }
             | type_specifier identifier LBRACE number RBRACE SEMI
                 { $$ = newDeclNode(VarK);
                   $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
-                  if ($1 -> type == Integer) $$ -> type = IntegerArray;
-                  else if ($1 -> type == Void) $$ -> type = VoidArray;
-                  else $$ -> type = None;
+                  if ($1 -> type == Integer) { $$ -> type = IntegerArray; }
+                  else if ($1 -> type == Void) { $$ -> type = VoidArray; }
+                  else { $$ -> type = None; }
                   $$ -> child[0] = $4;
+                  free($1);
+                  free($2);
                 }
             ;
 type_specifier
@@ -85,11 +88,13 @@ fun_declaration
                 { $$ = newDeclNode(FuncK);
                   $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
-                  if ($1 -> type == Integer) $$ -> type = Integer;
-                  else if ($1 -> type == Void) $$ -> type = Void;
-                  else $$ -> type = None;
+                  if ($1 -> type == Integer) { $$ -> type = Integer; }
+                  else if ($1 -> type == Void) { $$ -> type = Void; }
+                  else { $$ -> type = None; }
                   $$ -> child[0] = $4;
                   $$ -> child[1] = $6;
+                  free($1);
+                  free($2);
                 }
             ;
 params
@@ -106,7 +111,7 @@ param_list
                     while (t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $3;
                     $$ = $1;
-                  } else $$ = $3;
+                  }
                 }
             | param { $$ = $1; }
             ;
@@ -116,12 +121,16 @@ param
                   $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
+                  free($1);
+                  free($2);
                 }
             | type_specifier identifier LBRACE RBRACE
                 { $$ = newDeclNode(ParamK);
                   $$ -> attr.name = $2 -> attr.name;
                   $$ -> lineno = $2 -> lineno;
                   $$ -> type = $1 -> type;
+                  free($1);
+                  free($2);
                 }
             ;
 compound_stmt
@@ -138,7 +147,7 @@ local_declrations
                     while (t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $2;
                     $$ = $1;
-                  } else $$ = $2;
+                  } else { $$ = $2; }
                 }
             | empty { $$ = $1; }
             ;
@@ -149,7 +158,7 @@ statement_list
                     while(t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $2;
                     $$ = $1;
-                  } else $$ = $2;
+                  } { else $$ = $2; }
                 }
             | empty { $$ = $1; }
             ;
@@ -224,6 +233,7 @@ simple_expression
                   $$ -> child[0] = $1;
                   $$ -> child[1] = $3;
                   $$ -> attr.op = $2 -> attr.op;
+                  free($2);
                 }
             | additive_expression { $$ = $1; }
             ;
@@ -331,7 +341,7 @@ arg_list
                     while (t -> sibling != NULL) t = t -> sibling;
                     t -> sibling = $3;
                     $$ = $1;
-                  } else $$ = $3;
+                  } else { $$ = $3; }
                 }
             | expression { $$ = $1; }
             ;
