@@ -271,13 +271,12 @@ relop
             ;
 additive_expression
             : additive_expression addop term
-                { YYSTYPE t = newExpNode(OpK);
+                { $$ = newExpNode(OpK);
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> attr.op = $2 -> attr.op;
-                  if (t != NULL) {
-                    $$ -> child[0] = $1;
-                    $$ -> child[1] = $3;
-                    $$ = t;
-                  } else { $$ = $2; }
+                  $$ -> child[0] = $1;
+                  $$ -> child[1] = $3;
+                  free($2);
                 }
             | term { $$ = $1; }
             ;
@@ -295,13 +294,12 @@ addop
             ;
 term
             : term mulop factor
-                { YYSTYPE t = newExpNode(OpK);
+                { $$ = newExpNode(OpK);
+                  $$ -> lineno = $2 -> lineno;
                   $$ -> attr.op = $2 -> attr.op;
-                  if (t != NULL) {
-                    $$ -> child[0] = $1;
-                    $$ -> child[1] = $3;
-                    $$ = t;
-                  } else { $$ = $2; }
+                  $$ -> child[0] = $1;
+                  $$ -> child[1] = $3;
+                  free($2);
                 }
             | factor { $$ = $1; }
             ;
