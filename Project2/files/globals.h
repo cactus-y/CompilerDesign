@@ -90,7 +90,6 @@ typedef struct treeNode
              char * name; 
              int flag; } attr;
      ExpType type; /* for type checking of exps */
-    //  int isArray;
    } TreeNode;
 
 /**************************************************/

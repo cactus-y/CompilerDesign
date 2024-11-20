@@ -269,18 +269,6 @@ void printTree( TreeNode * tree )
           break;
       }
     } 
-    // else if(tree -> nodekind == ParamK) {
-    //   /* void parameter */
-    //   if(tree -> attr.name == NULL) {
-    //     fprintf(listing, "Void Parameter\n");
-    //   } else {
-    //     fprintf(listing, "Parameter: name = %s, type = ", tree -> attr.name);
-    //     if(tree -> type == Integer) fprintf(listing, "int");
-    //     else if(tree -> type == Void) fprintf(listing, "void");
-    //     if(tree -> isArray) fprintf(listing, "[]\n");
-    //     else fprintf(listing, "\n");
-    //   }
-    // } 
     else fprintf(listing, "Unknown Node Kind\n");
     for(i = 0; i < MAXCHILDREN; i++)
       printTree(tree -> child[i]);
