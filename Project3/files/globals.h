@@ -70,7 +70,7 @@ typedef enum {TypeK,OpcodeK,IdK} ParserKind;
 
 /* ExpType is used for type checking */
 // typedef enum {Void,Integer,Boolean} ExpType;
-typedef enum {Void,Integer,VoidArray,IntegerArray,None} ExpType;
+typedef enum {Void,Integer,VoidArray,IntegerArray,Undetermined,None} ExpType;
 
 #define MAXCHILDREN 3
 

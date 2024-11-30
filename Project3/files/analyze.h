@@ -8,6 +8,15 @@
 #ifndef _ANALYZE_H_
 #define _ANALYZE_H_
 
+/* Error types for symbol table
+ * Will be used for switch-case in error printing function
+ */
+typedef enum 
+{ UndeclaredFunc, UndeclaredVar, RedefinedSymbol, DeclaredVoidVar,
+  IndexNotInteger, IndexingOnlyForArray, 
+  InvalidFuncCall, InvalidOp, InvalidAssign, InvalidCond, InvalidReturn
+} ErrorKind;
+
 /* Function buildSymtab constructs the symbol 
  * table by preorder traversal of the syntax tree
  */

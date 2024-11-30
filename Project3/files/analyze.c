@@ -94,6 +94,47 @@ void buildSymtab(TreeNode * syntaxTree)
   }
 }
 
+static void printError(TreeNode * t, ErrorKind e)
+{ switch (e)
+  { case UndeclaredFunc:
+      fprintf(listing, "Error: undeclared function \"%s\" is called at line %d\n", t -> attr.name, t -> lineno);
+      break;
+    case UndeclaredVar:
+      fprintf(listing, "Error: undeclared variable \"%s\" is used at line %d\n", t -> attr.name, t -> lineno);
+      break;
+    case RedefinedSymbol:
+      fprintf(listing, "Error: Symbol \"%s\" is redefined at line %d\n", t -> attr.name, t -> lineno);
+      break;
+    case DeclaredVoidVar:
+      fprintf(listing, "Error: The void-type variable is declared at line %d (name : \"%s\")\n", t -> lineno, t -> attr.name);
+      break;
+    case IndexNotInteger:
+      fprintf(listing, "Error: Invalid array indexing at line %d (name : \"%s\"). indicies should be integer\n", t -> lineno, t -> attr.name);
+      break;
+    case IndexingOnlyForArray:
+      fprintf(listing, "Error: Invalid array indexing at line %d (name : \"%s\"). indexing can only allowed for int[] variables\n", t -> lineno, t -> attr.name);
+      break;
+    case InvalidFuncCall:
+      fprintf(listing, "Error: Invalid function call at line %d (name : \"%s\")\n", t -> lineno, t -> attr.name);
+      break;
+    case InvalidOp:
+      fprintf(listing, "Error: invalid operation at line %d\n", t -> lineno);
+      break;
+    case InvalidAssign:
+      fprintf(listing, "Error: invalid assignment at line %d\n", t -> lineno);
+      break;
+    case InvalidCond:
+      fprintf(listing, "Error: invalid condition at line %d\n", t -> lineno);
+      break;
+    case InvalidReturn:
+      fprintf(listing, "Error: Invalid return at line %d\n", t -> lineno);
+      break;
+    default:
+      break;
+  }
+  Error = TRUE;
+}
+
 static void typeError(TreeNode * t, char * message)
 { fprintf(listing,"Type error at line %d: %s\n",t->lineno,message);
   Error = TRUE;
